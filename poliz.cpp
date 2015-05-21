@@ -1,11 +1,7 @@
 #include "poliz.h"
 #include <stdexcept>
 
-void PolizConst::Evaluate(PolizStack& stack, PolizItem& currentCommand) const
-{
-    Push(stack, Clone());
-    ++currentCommand;
-}
+//--------------------------------------------------------------------------------------
 
 void PolizFunction::Evaluate(PolizStack& stack, PolizItem& currentCommand) const
 {
@@ -19,15 +15,16 @@ PolizElem* PolizFunPlus::EvaluateFun(PolizStack& stack) const
 {
     PolizElem* operand1 = Pop(stack);
     PolizElem* operand2 = Pop(stack);
-    PolizGenericConst<int>* i1 = dynamic_cast<PolizGenericConst<int>*>(operand1);
-    PolizGenericConst<int>* i2 = dynamic_cast<PolizGenericConst<int>*>(operand2);
+    PolizInt* i1 = dynamic_cast<PolizInt*>(operand1);
+    PolizInt* i2 = dynamic_cast<PolizInt*>(operand2);
     if (!i1)
         throw std::runtime_error("Not an int");
     if (!i2)
         throw std::runtime_error("Not an int");
-    int res = i1->Get() + i2->Get();
-    return new PolizGenericConst<int>(res);
+    return GetPolizGenericConst(i1->Get() + i2->Get());
 }
+
+//--------------------------------------------------------------------------------------
 
 void PolizOpGo::Evaluate(PolizStack& stack, PolizItem& currentCommand) const
 {

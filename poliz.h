@@ -23,34 +23,41 @@ protected:
 
 //--------------------------------------------------------------------------------------------------
 
-class PolizConst: public PolizElem
-{
-public:
-    virtual PolizElem* Clone() const = 0;
-    virtual ~PolizConst() {}
-    virtual void Evaluate(PolizStack& stack, PolizItem& currentCommand) const;
-};
-
 template <class T>
-class PolizGenericConst: public PolizConst
+class PolizGenericConst: public PolizElem
 {
 public:
     PolizGenericConst(const T& value): m_value(value)
     {}
     virtual ~PolizGenericConst(){}
+    virtual void Evaluate(PolizStack& stack, PolizItem& currentCommand) const
+    {
+        Push(stack, Clone());
+        ++currentCommand;
+    }
     virtual PolizElem* Clone() const
     {
-        return new PolizGenericConst(m_value);
+        return new PolizGenericConst<T>(m_value);
     }
     T Get() const
     {
         return m_value;
     }
+
 private:
     T m_value;
 };
 
 typedef PolizGenericConst<PolizItem> PolizLabel;
+typedef PolizGenericConst<int> PolizInt;
+typedef PolizGenericConst<double> PolizDouble;
+typedef PolizGenericConst<std::string> PolizString;
+
+template<class T>
+PolizGenericConst<T>* GetPolizGenericConst (T value)
+{
+    return new PolizGenericConst<T>(value);
+}
 
 //--------------------------------------------------------------------------------------------------
 
