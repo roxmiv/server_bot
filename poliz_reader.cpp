@@ -168,7 +168,62 @@ void Reader::ReadLogicExpression()
 
 void Reader::ReadArifmeticExpression()
 {
+    std::string result;
+    SymbolStack stack;
+    char value;
 
+    stack.push('(');
+
+    ClearSpaces();
+    while (true)
+    {
+        ClearSpaces();
+        if (m_cur == '(')
+            stack.push('(');
+        else if (m_cur == ')')
+        {
+            while ((!stack.empty()) && ((value = stack.top()) != '('))
+            {
+                result += value;
+                stack.pop();
+            }
+            if (stack.empty())
+                throw UnexpectedSymbolException(m_cur);
+            stack.pop();
+        }
+        else if ((m_cur == '*') || (m_cur == '/'))
+        {
+            while ((!stack.empty()) && ((stack.top() == '*') || (stack.top() == '/')))
+            {
+                value = stack.top();
+                result += value;
+                stack.pop();
+            }
+            stack.push(m_cur);
+        }
+        else if ((m_cur == '+') || (m_cur == '-'))
+        {
+            while ((!stack.empty()) && (stack.top() != '('))
+            {
+                value = stack.top();
+                result += value;
+                stack.pop();
+            }
+            stack.push(m_cur);
+        }
+        else if (m_cur == '$')
+        {
+            GetNextChar();
+            std::string variable = ReadIdentifier();
+        }
+    }
+    while ((!stack.empty()) && (stack.top() != '('))
+    {
+        result += stack.top();
+        stack.pop();
+    }
+    if (stack.empty())
+        throw ReaderException("Wrong expression");
 }
 
 std::string Reader::ReadIdentifier()

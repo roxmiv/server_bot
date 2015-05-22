@@ -1,18 +1,16 @@
-#include "poliz_reader.h"
+#include "sintax_parser.h"
 #include <iostream>
 
 int main()
 {
-    ArifmeticPolizReader reader;
     std::string input;
     std::cin >> input;
-    //std::cout << reader.ConvertString(input) << std::endl;
     try
     {
-        Reader reader2;
-        reader2.Run(input);
+        syntax_parser::SyntaxParser parser;
+        parser.Run(input);
     }
-    catch (const ReaderException& e)
+    catch (const syntax_parser::SyntaxParserException& e)
     {
         std::cout << "Error: " << e.what() << std::endl;
     }
