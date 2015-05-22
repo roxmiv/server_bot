@@ -12,174 +12,180 @@ void Reader::Run(const std::string& filename)
 
     m_programText.assign((std::istreambuf_iterator<char>(t)),
                             std::istreambuf_iterator<char>());
+    if (m_programText.empty())
+        throw ReaderException("Empty program");
     m_currentPos = 0;
-    ReadMain();
+    m_cur = m_programText[0];
+    ReadCommand();
 }
 
-void Reader::ReadMain()
+void Reader::ReadCommand()
 {
-    char cur;
-    while (m_currentPos < m_programText.length())
+    while (true)
     {
-        cur = m_programText[m_currentPos];
-        if (isDelimeter(cur))
+        try
         {
-            m_currentPos++;
-            continue;
+            ClearSpaces();
         }
-        else if (isArifmeticLogic(cur))
+        catch (UnexpectedFileEndException)
         {
-            m_currentPos++;
-            continue;
+            return;
         }
-        else if (cur == '"')
+
+        if (m_cur == '?')
         {
-            ReadString();
+            ReadFunction();
+            ClearSpaces();
+            if (m_cur != ';')
+            {
+                throw UnexpectedSymbolException(m_cur);
+            }
         }
-        else if (cur == ':')
+        else if (m_cur == '@')
         {
-            ReadAssign();
+            ReadMark();
         }
-        else if (isLitera(cur))
+        else if (m_cur == '$')
         {
-            ReadKeyWord();
+            ReadAssignment();
+            ClearSpaces();
+            if (m_cur != ';')
+            {
+                throw UnexpectedSymbolException(m_cur);
+            }
         }
-        else if ((isNumber(cur)) || cur=='-')
+        else if (isLitera())
         {
-            ReadNumber();
-        }
-        else if ((cur == '?') || (cur == '@') || (cur == '$'))
-        {
-            ReadIdentifier();
+            ReadLanguageStructure();
         }
         else
         {
-            throw std::runtime_error("Unexpectred symbol: " + cur);
+            throw UnexpectedSymbolException(m_cur);
         }
     }
 }
 
-void Reader::ReadNumber()
+void Reader::ReadLanguageStructure()
 {
-    int sign = 1;
-    int value = 0;
-    char cur = m_programText[m_currentPos];
-    if (cur == '-')
+    //goto @mark_name;
+    //if (logic_expression) { command1; command2;} else { command1; command2;}
+    //while (logic_expression) { command1; command2;}
+    std::string languageStructure = ReadIdentifier();
+    ClearSpaces();
+    if (languageStructure == "goto")
     {
-        sign = -1;
-        m_currentPos++;
+        if (m_cur != '@')
+            throw UnexpectedSymbolException(m_cur);
+        GetNextChar();
+        std::string markName = ReadIdentifier();
     }
-    while (m_currentPos < m_programText.length())
+    else if ((languageStructure == "if") or (languageStructure == "while"))
     {
-        cur = m_programText[m_currentPos];
-        if (isNumber(cur))
-        {
-            value = 10 * value + (cur - '0');
-        }
-        else if ((isDelimeter(cur)) || (isArifmeticLogic(cur)))
-        {
-            break;
-        }
-        else
-        {
-            throw std::runtime_error("Unexpectred symbol: " + cur);
-        }
-        m_currentPos++;
-    }
-    value *= sign;
-    std::cout << value << std::endl;
-}
-
-void Reader::ReadIdentifier()
-{
-    int type;
-    std::string identifier;
-    char cur = m_programText[m_currentPos];
-    if (cur == '?')
-    {
-        type = 1;
-    }
-    else if (cur == '@')
-    {
-        type = 2;
-    }
-    else if (cur == '$')
-    {
-        type = 3;
+        if (m_cur != '(')
+            throw UnexpectedSymbolException(m_cur);
+        GetNextChar();
+        ReadLogicExpression();
+        if (m_cur != ')')
+            throw UnexpectedSymbolException(m_cur);
+        ClearSpaces();
+        if (m_cur != '{')
+            throw UnexpectedSymbolException(m_cur);
+        GetNextChar();
+        ReadCommand();
+        if (m_cur != '}')
+            throw UnexpectedSymbolException(m_cur);
     }
     else
     {
-        throw std::runtime_error("Unexpectred symbol: " + cur);
+        throw UnexpectedLanguageStructureException(languageStructure);
     }
-    m_currentPos++;
-    while (m_currentPos < m_programText.length())
+}
+
+void Reader::ReadAssignment()
+{
+    // $variable_name = expression;
+    GetNextChar();
+    std::string variableName = ReadIdentifier();
+    ClearSpaces();
+    if (m_cur != '=')
+        throw UnexpectedSymbolException(m_cur);
+    GetNextChar();
+    ReadArifmeticExpression();
+}
+
+void Reader::ReadMark()
+{
+    //  @mark_name:
+    GetNextChar();
+    std::string markName = ReadIdentifier();
+    ClearSpaces();
+    if (m_cur != ':')
     {
-        cur = m_programText[m_currentPos];
-        if ((isNumber(cur)) || (isLitera(cur)) || (cur == '_'))
+        throw UnexpectedSymbolException(m_cur);
+    }
+    GetNextChar();
+}
+
+void Reader::ReadFunction()
+{
+    //  ?func_name (arg_1, arg_2, arg_3);   ?func_name();
+    GetNextChar();
+    std::string functionName = ReadIdentifier();
+    ClearSpaces();
+    if (m_cur != '(')
+    {
+        throw UnexpectedSymbolException(m_cur);
+    }
+    GetNextChar();
+    ReadFunctionArguments();
+    GetNextChar();
+}
+
+int Reader::ReadFunctionArguments()
+{
+    int argumentsNumber = 0;
+    ClearSpaces();
+    while (true)
+    {
+        ReadArifmeticExpression();
+        if (m_cur == ',')
         {
-            identifier += cur;
+            argumentsNumber++;
         }
-        else if ((isDelimeter(cur)) || (isArifmeticLogic(cur)))
+        else if (m_cur == ')')
         {
-            break;
+            return argumentsNumber; // Fix numbers of argument
         }
         else
         {
-            throw std::runtime_error("Unexpectred symbol: " + cur);
+            throw UnexpectedSymbolException(m_cur);
         }
-        m_currentPos++;
     }
-    std::cout << identifier << std::endl;
 }
 
-void Reader::ReadKeyWord()
+void Reader::ReadLogicExpression()
+{}
+
+void Reader::ReadArifmeticExpression()
 {
-    std::string keyWord;
-    char cur;
-    while (m_currentPos < m_programText.length())
+
+}
+
+std::string Reader::ReadIdentifier()
+{
+    std::string identifier;
+    while (true)
     {
-        cur = m_programText[m_currentPos];
-        if (isLitera(cur))
+        if (isLitera() || isNumber() || (m_cur == '_'))
         {
-            keyWord += cur;
-        }
-        else if ((isDelimeter(cur)) || (isArifmeticLogic(cur)))
-        {
-            break;
+            identifier += m_cur;
+            GetNextChar();
         }
         else
         {
-            throw std::runtime_error("Unexpectred symbol: " + cur);
+            if (identifier.empty())
+                throw EmptyIdentifierException();
+            return identifier;
         }
-        m_currentPos++;
     }
-    std::cout << keyWord << std::endl;
-}
-
-void Reader::ReadAssign()
-{
-    char cur = m_programText[m_currentPos];
-    m_currentPos++;
-    if ((m_currentPos < m_programText.length()) && ((cur = m_programText[m_currentPos]) == '='))
-        return;
-    throw std::runtime_error("Unexpectred symbol: " + cur);
-}
-
-void Reader::ReadString()
-{
-    char cur;
-    std::string stringConstant;
-    m_currentPos++;
-    while (m_currentPos < m_programText.length())
-    {
-        cur = m_programText[m_currentPos];
-        m_currentPos++;
-        if (cur == '"')
-        {
-            std::cout << stringConstant << std::endl;
-            return;
-        }
-        stringConstant += cur;
-    }
-    throw std::runtime_error("Unexpectred end of string constant");
 }

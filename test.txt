@@ -1,0 +1,10 @@
+@begin:
+    ?print ("This turn number" ?turn());
+    ?buy (2 ?rawPrice());
+    ?sell (?production(?myId()) ?productionPrice()); 
+    $toprod := 2;
+    if ?raw(?myId) < $toprod then
+        $toprod := ?raw(?myId());
+    ?prod ($toprod);
+    ?endturn();
+    goto @begin;

@@ -12,7 +12,7 @@ int main()
         Reader reader2;
         reader2.Run(input);
     }
-    catch (const std::runtime_error& e)
+    catch (const ReaderException& e)
     {
         std::cout << "Error: " << e.what() << std::endl;
     }
