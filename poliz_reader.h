@@ -22,27 +22,109 @@ public:
         for (unsigned int i = 0; i < size; i++)
         {
             if (input[i] == '(')
-                m_stack.push('(');
+                stack.push('(');
             else if (input[i] == ')')
             {
-                while ((stack.size() > 0) && ((value = stack.top()) != '('))
+                while ((!stack.empty()) && ((value = stack.top()) != '('))
                 {
                     result += value;
                     stack.pop();
                 }
-                if (stack.size() == 0)
-                    raise std::runtime_error("Wrong expression");
+                if (stack.empty())
+                    throw std::runtime_error("Wrong expression");
                 stack.pop();
             }
             else if ((input[i] == '*') || (input[i] == '/'))
             {
-
+                while ((!stack.empty()) && ((stack.top() == '*') || (input[i] == '/')))
+                {
+                    value = stack.top();
+                    result += value;
+                    stack.pop();
+                }
+                stack.push(input[i]);
+            }
+            else if ((input[i] == '+') || (input[i] == '-'))
+            {
+                while ((!stack.empty()) && (stack.top() != '('))
+                {
+                    value = stack.top();
+                    result += value;
+                    stack.pop();
+                }
+                stack.push(input[i]);
+            }
+            else if (isSpace(input[i]))
+            {
+                continue;
+            }
+            else
+            {
+                result += input[i];
             }
         }
+        while ((!stack.empty()) && (stack.top() != '('))
+        {
+            result += stack.top();
+            stack.pop();
+        }
+        if (stack.empty())
+            throw std::runtime_error("Wrong expression");
+        return result;
     }
 
 private:
     typedef std::stack<char> SymbolStack;
+
+    bool isSpace(char c)
+    {
+        return ((c == ' ') || (c == '\n') || (c == '\t'));
+    }
+};
+
+class Reader
+{
+public:
+    void Run(const std::string& filename);
+private:
+    void ReadMain();
+    void ReadNumber();
+    void ReadIdentifier();
+    void ReadKeyWord();
+    void ReadAssign();
+    void ReadString();
+
+    bool isDelimeter(char cur)
+    {
+        return ((cur == ' ') || (cur == '\t') || (cur == '\n') || (cur == ';'));
+    }
+
+    bool isNumber(char cur)
+    {
+        return ((cur >= '0') && (cur <= '9'));
+    }
+
+    bool isLitera(char cur)
+    {
+        return ((cur >= 'a') && (cur <= 'z') || (cur >= 'A') && (cur <= 'Z'));
+    }
+
+    bool isArifmeticLogic(char cur)
+    {
+        return ((cur == '+')
+                || (cur == '-')
+                || (cur == '*')
+                || (cur == '/')
+                || (cur == '%')
+                || (cur == '<')
+                || (cur == '>')
+                || (cur == '=')
+                || (cur == ':'));
+    }
+
+private:
+    std::string m_programText;
+    unsigned int m_currentPos;
 };
 
 #endif // POLIZ_READER_H
