@@ -1,16 +1,26 @@
+#include <iostream>
 
-
+#include <stdlib.h>
+#include <sys/types.h>
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
 #include <sstream>
 
+#include <vector>
+#include <errno.h>
 
-int StrToInt(const std::string& str)
-{
-    std::stringstream ss(str);
-    int ret;
-    ss >> ret;
-    return ret;
-    
-}
+#include <condition_variable>
+#include <thread>
+#include <mutex>
+#include <string>
+#include <fcntl.h>
+#include <string.h>
+#include <stdio.h>
+#include <regex>
+#include <map>
+#include <unistd.h>
+#include <sstream>
 
 struct PlayerData
 {

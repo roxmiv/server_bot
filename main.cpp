@@ -1,4 +1,6 @@
 #include "sintax_parser.h"
+#include "semantic_parser.h"
+#include "server_api.h"
 #include <iostream>
 
 int main()
