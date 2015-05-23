@@ -10,7 +10,6 @@
 namespace syntax_parser
 {
 
-
 class SyntaxParserException: public std::exception
 {
 public:
@@ -60,7 +59,6 @@ enum LexemType
     LEX_IF,
     LEX_THEN,
     LEX_ELSE,
-    LEX_GOTO,
     LEX_WHILE,
     LEX_DO,
 
@@ -110,6 +108,8 @@ private:
     LexemType m_type;
     std::string m_value;
 };
+
+typedef std::vector<Lexema> LexemsVector;
 
 class SyntaxParser
 {
@@ -177,7 +177,6 @@ private:
     LexemType GetLexemaByText(const std::string& text);
 
 private:
-    typedef std::vector<Lexema> LexemsVector;
     typedef std::map<std::string, LexemType> WordLexemMap;
 
     std::string m_programText;

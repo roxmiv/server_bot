@@ -7,7 +7,6 @@ namespace syntax_parser
 {
 SyntaxParser::SyntaxParser()
 {
-    m_words["goto"] = LEX_GOTO;
     m_words["if"] = LEX_IF;
     m_words["then"] = LEX_THEN;
     m_words["else"] = LEX_ELSE;
@@ -81,7 +80,7 @@ void SyntaxParser::MainCircle()
         {
             ReadIdentifier();
         }
-        else if ((isDigit()) || (m_cur == '-'))
+        else if (isDigit())
         {
             ReadNumber();
         }
@@ -172,6 +171,25 @@ void SyntaxParser::ReadNumber()
     {
        value += m_cur;
        GetNextChar();
+    }
+    if (m_cur == '.')
+    {
+        value += m_cur;
+        GetNextChar();
+        if (isDigit())
+        {
+            while (isDigit())
+            {
+               value += m_cur;
+               GetNextChar();
+            }
+            m_lexems.push_back(Lexema(LEX_CONST_DOUBLE, value));
+            return;
+        }
+        else
+        {
+            throw UnexpectedSymbolException(m_cur);
+        }
     }
     m_lexems.push_back(Lexema(LEX_CONST_INT, value));
 }
